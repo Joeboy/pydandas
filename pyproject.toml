@@ -1,0 +1,45 @@
+[tool.poetry]
+name = "pydandas"
+version = "0.1.0"
+description = "Joe's pydantic / pandas playground"
+authors = ["Joe Button <j.button@reckondigital.com>"]
+#license = "MIT" ???
+
+[tool.poetry.dependencies]
+python = "^3.12"
+pydantic = "^2.5.3"
+pandas = "^2.2.1"
+openpyxl = "^3.1.2"
+
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.4"
+pre-commit = "^3.6.0"
+polyfactory = "^2.13.0"
+xlsxwriter = "^3.1.9"
+xlsx2csv = "^0.8.2"
+
+
+[tool.ruff]
+target-version = "py38"
+# See https://docs.astral.sh/ruff/rules/
+select = [
+    "E",  # pycodestyle errors
+    "F",  # pyflakes
+    "I",  # isort
+]
+ignore = [
+    "E501",  # line-too-long
+]
+
+
+[tool.bandit]
+# B101 is about asserts being possibly optimized out
+# B311 is about randrange not being cryptographically secure
+skips = ["B101", "B311"]
+exclude_dirs = [".venv", "scripts/docker"]
+
+
+[build-system]
+requires = ["poetry>=0.12"]
+build-backend = "poetry.masonry.api"
