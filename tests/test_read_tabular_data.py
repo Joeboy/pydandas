@@ -41,8 +41,12 @@ def test_read_excel(create_excel_file):
         ]
     )
 
-    reader = SimpleExcelReader(excel_file, TimestampedRowModel)
+    reader = SimpleExcelReader(
+        excel_file, TimestampedRowModel, max_errors_before_bailing=999
+    )
+    assert not reader.finished
     df, error_list = reader.get_dataframe_and_errors()
+    assert reader.finished
     row1 = df.iloc[0].to_dict()
     timestamp = row1.pop("timestamp")
     assert isinstance(timestamp, datetime.datetime)
@@ -104,7 +108,9 @@ def test_read_csv(create_csv_file):
         ]
     )
 
-    reader = SimpleCsvReader(csv_file, TimestampedRowModel)
+    reader = SimpleCsvReader(
+        csv_file, TimestampedRowModel, max_errors_before_bailing=999
+    )
     df, error_list = reader.get_dataframe_and_errors()
     row1 = df.iloc[0].to_dict()
     timestamp = row1.pop("timestamp")

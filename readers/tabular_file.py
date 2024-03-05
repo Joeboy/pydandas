@@ -12,19 +12,27 @@ from pydantic import BaseModel
 class TabularDataFileReader:
     """Reader for a straightforward CSV file with header row"""
 
-    STOP_AFTER_ERRORS_COUNT = 0
     columns: list[str] | None
     bailed_due_to_excessive_errors: bool
+    dataframe: pd.DataFrame | None
+    _finished: bool
     _validation_errors: list[str]
+    _max_errors_before_bailing: int
 
     def __init__(
-        self, source: str | Path | TextIO | BinaryIO, model: Type[BaseModel]
+        self,
+        source: str | Path | TextIO | BinaryIO,
+        model: Type[BaseModel],
+        max_errors_before_bailing: int = 0,
     ) -> None:
         self._source = source
         self._model = model
         self._validation_errors = []
+        self._max_errors_before_bailing = max_errors_before_bailing
+        self._finished = False
         self.columns = None
         self.bailed_due_to_excessive_errors = False
+        self.dataframe = None
 
     def process_rows(self) -> Iterable[dict]:
         for row in self.iter_rows():
@@ -38,15 +46,20 @@ class TabularDataFileReader:
                     self._validation_errors.append(
                         f"Error at line {row_number}, column '{col_name}', input '{input_value}': {error['msg']}"
                     )
-                    if len(self._validation_errors) > self.STOP_AFTER_ERRORS_COUNT:
+                    if len(self._validation_errors) > self._max_errors_before_bailing:
                         self.bailed_due_to_excessive_errors = True
-                        break
+                        return
             else:
                 yield entry.model_dump()
 
+    @property
+    def finished(self):
+        return self._finished and not self.bailed_due_to_excessive_errors
+
     def get_dataframe_and_errors(self) -> tuple[Iterable, list[str]]:
-        df = pd.DataFrame(self.process_rows())
-        return df, self._validation_errors
+        self.dataframe = pd.DataFrame(self.process_rows())
+        self._finished = True
+        return self.dataframe, self._validation_errors
 
     def iter_rows(self) -> Iterable[dict]:
         raise NotImplementedError
