@@ -1,7 +1,7 @@
 import datetime
 import timeit
 
-from pydantic import BaseModel
+from pydantic import AliasChoices, BaseModel, Field
 
 from readers.pydantic_types import CustomDatetime
 from readers.tabular_file import SimpleCsvReader, SimpleExcelReader
@@ -9,7 +9,7 @@ from readers.tabular_file import SimpleCsvReader, SimpleExcelReader
 
 class TimestampedRowModel(BaseModel):
     col1: int
-    col2: str
+    col2: str = Field(alias=AliasChoices("col2", "column_2", "column_two"))
     timestamp: CustomDatetime
     sheet_name: str | None
     row_number: int
@@ -20,22 +20,22 @@ def test_read_excel(create_excel_file):
         [
             {
                 "col1": 1,
-                "col2": "col2-1",
+                "Column 2": "col2-1",
                 "timestamp": datetime.datetime.now() - datetime.timedelta(days=1),
             },
             {
                 "col1": "2",
-                "col2": "col2-2",
+                "Column 2": "col2-2",
                 "timestamp": datetime.datetime.now(),
             },
             {
                 "col1": 3,
-                "col2": "col2-3",
+                "Column 2": "col2-3",
                 "timestamp": "Novtember the 32nd",
             },
             {
                 "col1": 4,
-                "col2": "col2-4",
+                "Column 2": "col2-4",
                 "timestamp": "2024-02-15",
             },
         ]

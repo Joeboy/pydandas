@@ -1,4 +1,5 @@
 import csv
+import re
 from pathlib import Path
 from typing import BinaryIO, Iterable, TextIO, Type
 
@@ -50,12 +51,17 @@ class TabularDataFileReader:
     def iter_rows(self) -> Iterable[dict]:
         raise NotImplementedError
 
+    def normalize_column_name(self, name: str) -> str:
+        """Convert to lower case and strip leading/trailing underscores"""
+        return re.sub(r"\s+", "_", name.lower().strip("_"))
+
 
 class SimpleCsvReader(TabularDataFileReader):
     _source: str | Path | BinaryIO
 
     def iter_rows(self):
         for i, row in enumerate(csv.DictReader(self._source)):
+            row = {self.normalize_column_name(k): v for k, v in row.items()}
             row["row_number"] = 1 + i
             row["sheet_name"] = None
             yield row
@@ -70,6 +76,7 @@ class SimpleExcelReader(TabularDataFileReader):
             row_iterator = sheet.iter_rows()
             self.columns = [str(r.value) for r in next(row_iterator)]
             self.columns.pop(0)  # Remove null header for row number
+            self.columns = [self.normalize_column_name(c) for c in self.columns]
             for row in row_iterator:
                 row = [c.value for c in row]
                 row_number = 1 + int(row.pop(0))  # First entry is row number
